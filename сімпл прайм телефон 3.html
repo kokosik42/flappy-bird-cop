@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Флэппи Берд Клон</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #70c5ce; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    canvas { background: #fff; border: 2px solid #000; touch-action: manipulation; }
+  </style>
+</head>
+<body>
+  <canvas id="game" width="400" height="600"></canvas>
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    let bird, pipes, frame, score;
+
+    function resetGame() {
+      bird = { x: 80, y: 200, width: 20, height: 20, vy: 0, gravity: 0.5, jump: -8 };
+      pipes = [];
+      frame = 0;
+      score = 0;
+    }
+
+    function drawBird() {
+      ctx.fillStyle = 'yellow';
+      ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
+    }
+
+    function drawPipes() {
+      ctx.fillStyle = 'green';
+      pipes.forEach(p => {
+        ctx.fillRect(p.x, 0, p.width, p.top);
+        ctx.fillRect(p.x, canvas.height - p.bottom, p.width, p.bottom);
+      });
+    }
+
+    function updatePipes() {
+      if (frame % 100 === 0) {
+        let top = Math.random() * 200 + 50;
+        let gap = 120;
+        let bottom = canvas.height - top - gap;
+        pipes.push({ x: canvas.width, width: 40, top: top, bottom: bottom });
+      }
+      pipes.forEach(p => p.x -= 2);
+      pipes = pipes.filter(p => p.x + p.width > 0);
+    }
+
+    function checkCollision() {
+      for (let p of pipes) {
+        if (
+          bird.x < p.x + p.width &&
+          bird.x + bird.width > p.x &&
+          (bird.y < p.top || bird.y + bird.height > canvas.height - p.bottom)
+        ) {
+          resetGame();
+        }
+      }
+      if (bird.y + bird.height > canvas.height || bird.y < 0) {
+        resetGame();
+      }
+    }
+
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      bird.vy += bird.gravity;
+      bird.y += bird.vy;
+
+      drawBird();
+      updatePipes();
+      drawPipes();
+      checkCollision();
+
+      score++;
+      ctx.fillStyle = 'black';
+      ctx.font = '20px sans-serif';
+      ctx.fillText('рахунок: ' + score, 10, 30);
+
+      frame++;
+      requestAnimationFrame(gameLoop);
+    }
+
+    function flap() {
+      bird.vy = bird.jump;
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.code === 'Space') flap();
+    });
+    canvas.addEventListener('touchstart', flap);
+    canvas.addEventListener('click', flap);
+
+    resetGame();
+    gameLoop();
+  </script>
+</body>
+</html>
